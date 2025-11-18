@@ -1,4 +1,4 @@
-import { db, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from './firebase-config.js';
+import { db, collection, addDoc, getDocs, deleteDoc, doc } from './firebase-config.js';
 
 // إضافة قناة جديدة
 document.getElementById('channel-form').addEventListener('submit', async (e) => {
@@ -9,8 +9,16 @@ document.getElementById('channel-form').addEventListener('submit', async (e) => 
     const url = document.getElementById('channel-url').value;
     const category = document.getElementById('channel-category').value;
 
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    
     try {
-        await addDoc(collection(db, "channels"), {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'جاري الإضافة...';
+        
+        console.log("محاولة إضافة قناة:", { name, logo, url, category });
+        
+        const docRef = await addDoc(collection(db, "channels"), {
             name: name,
             logo: logo,
             url: url,
@@ -18,22 +26,32 @@ document.getElementById('channel-form').addEventListener('submit', async (e) => 
             createdAt: new Date()
         });
 
+        console.log("تم إضافة القناة بنجاح مع ID:", docRef.id);
+        
         alert('تمت إضافة القناة بنجاح!');
         document.getElementById('channel-form').reset();
         loadChannelsList();
+        
     } catch (error) {
         console.error("Error adding channel: ", error);
-        alert('حدث خطأ أثناء إضافة القناة');
+        alert('حدث خطأ أثناء إضافة القناة: ' + error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
     }
 });
 
 // تحميل وعرض قائمة القنوات
 async function loadChannelsList() {
     const channelsList = document.getElementById('channels-list');
-    channelsList.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+    channelsList.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p class="mt-2">جاري تحميل القنوات...</p></div>';
 
     try {
+        console.log("جاري تحميل قائمة القنوات...");
+        
         const querySnapshot = await getDocs(collection(db, "channels"));
+        console.log("عدد القنوات في قاعدة البيانات:", querySnapshot.size);
+        
         channelsList.innerHTML = '';
 
         if (querySnapshot.empty) {
@@ -46,10 +64,15 @@ async function loadChannelsList() {
             const channelItem = `
                 <div class="channel-item border-bottom py-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <img src="${channel.logo}" alt="${channel.name}" style="width: 50px; height: 50px; object-fit: contain;">
-                            <span class="ms-2">${channel.name}</span>
-                            <small class="text-muted ms-2">(${channel.category})</small>
+                        <div class="d-flex align-items-center">
+                            <img src="${channel.logo}" alt="${channel.name}" 
+                                 style="width: 50px; height: 50px; object-fit: contain;"
+                                 onerror="this.src='https://via.placeholder.com/50?text=No+Image'">
+                            <div class="ms-3">
+                                <strong>${channel.name}</strong>
+                                <br>
+                                <small class="text-muted">${channel.category}</small>
+                            </div>
                         </div>
                         <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}">حذف</button>
                     </div>
@@ -65,10 +88,11 @@ async function loadChannelsList() {
                 if (confirm('هل أنت متأكد من حذف هذه القناة؟')) {
                     try {
                         await deleteDoc(doc(db, "channels", channelId));
+                        console.log("تم حذف القناة:", channelId);
                         loadChannelsList();
                     } catch (error) {
                         console.error("Error deleting channel: ", error);
-                        alert('حدث خطأ أثناء حذف القناة');
+                        alert('حدث خطأ أثناء حذف القناة: ' + error.message);
                     }
                 }
             });
@@ -76,7 +100,12 @@ async function loadChannelsList() {
 
     } catch (error) {
         console.error("Error loading channels: ", error);
-        channelsList.innerHTML = '<p class="text-center text-danger">حدث خطأ في تحميل القنوات</p>';
+        channelsList.innerHTML = `
+            <div class="alert alert-danger">
+                <p class="text-center">حدث خطأ في تحميل القنوات</p>
+                <p class="text-center small">${error.message}</p>
+            </div>
+        `;
     }
 }
 
