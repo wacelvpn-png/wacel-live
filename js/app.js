@@ -1,5 +1,15 @@
 import { db, collection, getDocs, onSnapshot } from './firebase-config.js';
 
+// دالة مساعدة لاستخراج البيانات بغض النظر عن لغة الحقول
+function getChannelData(docData) {
+    return {
+        name: docData.name || docData.اسم || 'بدون اسم',
+        logo: docData.logo || docData.الشعار || 'https://via.placeholder.com/150?text=No+Image',
+        url: docData.url || docData['عنوان URL'] || docData.رابط || '#',
+        category: docData.category || docData.فئة || 'عام'
+    };
+}
+
 // تحميل وعرض القنوات
 async function loadChannels() {
     const channelsContainer = document.getElementById('channels-container');
@@ -10,6 +20,11 @@ async function loadChannels() {
         
         const querySnapshot = await getDocs(collection(db, "channels"));
         console.log("تم الحصول على البيانات:", querySnapshot.size, "قناة");
+        
+        // عرض البيانات الخام للت debug
+        querySnapshot.forEach((doc) => {
+            console.log("بيانات القناة الخام:", doc.id, doc.data());
+        });
         
         channelsContainer.innerHTML = '';
 
@@ -26,8 +41,10 @@ async function loadChannels() {
         }
 
         querySnapshot.forEach((doc) => {
-            const channel = doc.data();
-            console.log("عرض القناة:", channel.name);
+            const rawData = doc.data();
+            const channel = getChannelData(rawData);
+            
+            console.log("عرض القناة بعد المعالجة:", channel);
             
             const channelCard = `
                 <div class="col-md-3 mb-4">
@@ -71,7 +88,7 @@ async function loadChannels() {
     }
 }
 
-// تشغيل الفيديو في المودال
+// الباقي بدون تغيير...
 function playVideo(url, title) {
     const videoPlayer = document.getElementById('videoPlayer');
     const videoModalTitle = document.getElementById('videoModalTitle');
@@ -84,11 +101,10 @@ function playVideo(url, title) {
     const videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
     videoModal.show();
     
-    // إعادة التشغيل عند فتح المودال
     videoPlayer.load();
 }
 
-// تحديث تلقائي للقنوات (اختياري)
+// تحديث تلقائي للقنوات
 function setupRealtimeUpdates() {
     onSnapshot(collection(db, "channels"), (snapshot) => {
         console.log("تحديث تلقائي للقنوات");
@@ -96,12 +112,10 @@ function setupRealtimeUpdates() {
     });
 }
 
-// تحميل القنوات عند فتح الصفحة
 document.addEventListener('DOMContentLoaded', function() {
     loadChannels();
-    setupRealtimeUpdates(); // تفعيل التحديث التلقائي
+    setupRealtimeUpdates();
 });
 
-// جعل الدوال متاحة globally للتصحيح
 window.loadChannels = loadChannels;
 window.playVideo = playVideo;
