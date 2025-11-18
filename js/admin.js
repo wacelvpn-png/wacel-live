@@ -1,6 +1,16 @@
 import { db, collection, addDoc, getDocs, deleteDoc, doc } from './firebase-config.js';
 
-// إضافة قناة جديدة
+// دالة مساعدة لاستخراج البيانات
+function getChannelData(docData) {
+    return {
+        name: docData.name || docData.اسم || 'بدون اسم',
+        logo: docData.logo || docData.الشعار || 'https://via.placeholder.com/150?text=No+Image',
+        url: docData.url || docData['عنوان URL'] || docData.رابط || '#',
+        category: docData.category || docData.فئة || 'عام'
+    };
+}
+
+// إضافة قناة جديدة - استخدم الإنجليزية دائماً
 document.getElementById('channel-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -18,11 +28,12 @@ document.getElementById('channel-form').addEventListener('submit', async (e) => 
         
         console.log("محاولة إضافة قناة:", { name, logo, url, category });
         
+        // استخدم الإنجليزية دائماً في الحقول
         const docRef = await addDoc(collection(db, "channels"), {
-            name: name,
-            logo: logo,
-            url: url,
-            category: category,
+            name: name,        // إنجليزية
+            logo: logo,        // إنجليزية
+            url: url,          // إنجليزية
+            category: category, // إنجليزية
             createdAt: new Date()
         });
 
@@ -52,6 +63,11 @@ async function loadChannelsList() {
         const querySnapshot = await getDocs(collection(db, "channels"));
         console.log("عدد القنوات في قاعدة البيانات:", querySnapshot.size);
         
+        // عرض البيانات الخام
+        querySnapshot.forEach((doc) => {
+            console.log("بيانات القناة في الإدارة:", doc.id, doc.data());
+        });
+        
         channelsList.innerHTML = '';
 
         if (querySnapshot.empty) {
@@ -60,7 +76,9 @@ async function loadChannelsList() {
         }
 
         querySnapshot.forEach((doc) => {
-            const channel = doc.data();
+            const rawData = doc.data();
+            const channel = getChannelData(rawData);
+            
             const channelItem = `
                 <div class="channel-item border-bottom py-3">
                     <div class="d-flex justify-content-between align-items-center">
@@ -72,6 +90,8 @@ async function loadChannelsList() {
                                 <strong>${channel.name}</strong>
                                 <br>
                                 <small class="text-muted">${channel.category}</small>
+                                <br>
+                                <small class="text-info">${channel.url}</small>
                             </div>
                         </div>
                         <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}">حذف</button>
