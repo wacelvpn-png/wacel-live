@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أداة إصلاح قاعدة البيانات</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .log-container {
+            height: 400px;
+            overflow-y: auto;
+            background: #1e1e1e;
+            color: #00ff00;
+            font-family: monospace;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .status-box {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .warning { background: #fff3cd; color: #856404; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-danger">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">🛠️ أداة إصلاح قاعدة البيانات</span>
+            <div>
+                <a href="index.html" class="btn btn-light">العودة للتطبيق</a>
+                <a href="admin.html" class="btn btn-outline-light">لوحة التحكم</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- إحصائيات -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 id="total-channels">0</h5>
+                        <p class="text-muted">إجمالي القنوات</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 id="fixed-channels">0</h5>
+                        <p class="text-muted">القنوات المُصلحة</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 id="broken-channels">0</h5>
+                        <p class="text-muted">القنوات التالفة</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 id="deleted-channels">0</h5>
+                        <p class="text-muted">القنوات المحذوفة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- أدوات الإصلاح -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-warning">
+                        <h5>فحص قاعدة البيانات</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-info w-100 mb-2" onclick="scanDatabase()">🔍 فحص جميع القنوات</button>
+                        <button class="btn btn-secondary w-100 mb-2" onclick="testFirebaseConnection()">🧪 اختبار اتصال Firebase</button>
+                        <button class="btn btn-primary w-100 mb-2" onclick="fixAllChannels()">🔧 إصلاح جميع القنوات تلقائياً</button>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header bg-success">
+                        <h5>إضافة بيانات تجريبية</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-success w-100 mb-2" onclick="addSampleChannels()">➕ إضافة قنوات تجريبية</button>
+                        <button class="btn btn-outline-success w-100 mb-2" onclick="addMixedChannels()">🔄 إضافة قنوات مختلطة (للفحص)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-danger">
+                        <h5>أدوات متقدمة (احترس)</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-outline-danger w-100 mb-2" onclick="deleteBrokenChannels()">🗑️ حذف القنوات التالفة فقط</button>
+                        <button class="btn btn-danger w-100 mb-2" onclick="deleteAllChannels()">💀 حذف جميع القنوات</button>
+                        <div class="form-text text-danger">
+                            ⚠️ هذه العمليات لا يمكن التراجع عنها
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header bg-info">
+                        <h5>سجلات النظام</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="log-container" id="logContainer">
+                            === نظام الإصلاح جاهز ===
+                        </div>
+                        <button class="btn btn-outline-secondary w-100 mt-2" onclick="clearLog()">مسح السجلات</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- نتائج الفحص -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>نتائج الفحص</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="scanResults"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/repair-tool.js"></script>
+</body>
+</html>
